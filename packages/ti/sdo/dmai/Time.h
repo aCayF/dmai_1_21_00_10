@@ -164,6 +164,7 @@ extern Int Time_delta(Time_Handle hTime, Uint32 *deltaPtr);
  */
 extern Int Time_total(Time_Handle hTime, Uint32 *totalPtr);
 
+extern Int Time_getStr(Char *str);
 #if defined (__cplusplus)
 }
 #endif

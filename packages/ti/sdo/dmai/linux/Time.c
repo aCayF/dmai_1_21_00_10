@@ -31,6 +31,7 @@
  * --/COPYRIGHT--*/
 
 #include <stdlib.h>
+#include <time.h>
 #include <sys/time.h>
 
 #include <xdc/std.h>
@@ -151,3 +152,23 @@ Int Time_total(Time_Handle hTime, UInt32 *totalPtr)
     return Dmai_EOK;
 }
 
+/******************************************************************************
+ * Time_getStr
+ ******************************************************************************/
+Int Time_getStr(Char *str)
+{	
+    assert(str);
+
+	struct tm *t;
+	time_t tt;
+	time(&tt);
+	t=localtime(&tt);
+	if (sprintf(str,"%04d-%02d-%02d-%02d-%02d-%02d"
+                   ,t->tm_year+1900,t->tm_mon+1
+                   ,t->tm_mday,t->tm_hour,t->tm_min,t->tm_sec) != 19) {
+        Dmai_dbg0("Failed to get the time string\n");
+        return Dmai_EFAIL;
+    }
+
+    return Dmai_EOK;
+}
