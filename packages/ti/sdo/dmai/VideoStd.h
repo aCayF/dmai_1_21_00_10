@@ -75,8 +75,8 @@
 #define VideoStd_1080P_WIDTH     1920    /**< Width in pixels of 1080P */
 #define VideoStd_1080P_HEIGHT    1080    /**< Height in pixels of 1080P */
 
-#define VideoStd_LCD_WIDTH     480    /**< Width in pixels of lcd */
-#define VideoStd_LCD_HEIGHT    272    /**< Height in pixels of lcd */
+#define VideoStd_LCD_WIDTH     320    /**< Width in pixels of lcd */
+#define VideoStd_LCD_HEIGHT    240    /**< Height in pixels of lcd */
 
 /*
  * WARNING! When adding a member to this enumerated type, make sure you

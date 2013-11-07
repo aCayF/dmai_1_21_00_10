@@ -86,7 +86,7 @@ const Display_Attrs Display_Attrs_DM365_VID_DEFAULT = {
     3,
     Display_Std_V4L2,
     VideoStd_720P_60,
-    Display_Output_COMPONENT,
+    Display_Output_LCD,
     "/dev/video2",
     0,
     ColorSpace_YUV420PSEMI
@@ -224,7 +224,7 @@ static Char *outputStrings[Display_Output_COUNT] = {
     "SVIDEO",
     "COMPOSITE",
     "COMPONENT",
-    "LCD2",
+    "LCD",
     "DVI",
     NULL
 };
@@ -256,7 +256,7 @@ static Char *modeStrings[VideoStd_COUNT] = {
     "1080P-30",
     "1080P-25",
     "1080P-24",
-    "480x272",
+    "320x240",
 };
 
 #ifdef Dmai_Device_omap3530
