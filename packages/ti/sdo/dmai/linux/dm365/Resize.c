@@ -414,8 +414,52 @@ Int Resizer_continous_config(void)
 		close(rsz_fd);
 		return Dmai_EFAIL;
 	}
-	Dmai_dbg0("Resizer initialized\n");
+	Dmai_dbg0("Resizer A initialized\n");
 	return rsz_fd;
+}
+
+/******************************************************************************
+* Initialize & configure resizer B in on-the-fly (continous) mode
+******************************************************************************/
+int Resizer_B_config(int rsz_fd, unsigned int width, unsigned int height)
+{
+    unsigned int user_mode;
+    struct rsz_channel_config rsz_chan_config;
+    struct rsz_continuous_config rsz_cont_config;
+
+    user_mode = IMP_MODE_CONTINUOUS;
+    if(rsz_fd <= 0) {
+       Dmai_err0("Cannot use resize device \n");
+       return NULL;
+    }
+                                        
+    bzero(&rsz_cont_config, sizeof(struct rsz_continuous_config));
+    rsz_chan_config.oper_mode = user_mode;
+    rsz_chan_config.chain = 1;
+    rsz_chan_config.len = sizeof(struct rsz_continuous_config);
+    rsz_chan_config.config = &rsz_cont_config;
+
+    if (ioctl(rsz_fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
+        Dmai_err1("Error in getting channel configuration from resizer (%s)\n",
+                   strerror(errno));
+        return Dmai_EFAIL;
+    }
+                                                                                                      
+    /* we can ignore the input spec since we are chaining. So only
+       set output specs */
+    rsz_cont_config.output2.width = width;
+    rsz_cont_config.output2.height= height;
+    rsz_cont_config.output2.pix_fmt = IPIPE_YUV420SP;
+    rsz_cont_config.output2.enable = 1;
+    rsz_chan_config.len = sizeof(struct rsz_continuous_config);
+    rsz_chan_config.config = &rsz_cont_config;
+    if (ioctl(rsz_fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
+        Dmai_err1("Error in setting resizer configuration (%s)\n", 
+                   strerror(errno));
+        return Dmai_EFAIL;
+    }
+    Dmai_dbg0("Resizer B initialized\n");
+    return Dmai_EOK;
 }
 
 /******************************************************************************
@@ -449,7 +493,7 @@ Int Previewer_continous_config(void)
 	}
 
 	if (oper_mode == user_mode) {
-		Dmai_dbg0("Operating mode changed successfully to continuous in previewer");
+		Dmai_dbg0("Operating mode changed successfully to continuous in previewer\n");
 	} else {
 		Dmai_err0("failed to set mode to continuous in previewer\n");
 		close(preview_fd);

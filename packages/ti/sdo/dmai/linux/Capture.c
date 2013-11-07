@@ -267,6 +267,9 @@ Capture_Handle Capture_create(BufTab_Handle hBufTab, Capture_Attrs *attrs)
             cleanup(hCapture);
             return NULL;            
         }
+        VideoStd_getResolution(VideoStd_CIF, &width, &height);
+        Resizer_B_config(hCapture->resizerFd,width,height);
+
         hCapture->previewerFd = Previewer_continous_config();
         if(hCapture->previewerFd <= 0) {
             Dmai_err0("Unable to configure Resizer\n");
