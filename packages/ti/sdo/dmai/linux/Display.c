@@ -256,7 +256,7 @@ static Char *modeStrings[VideoStd_COUNT] = {
     "1080P-30",
     "1080P-25",
     "1080P-24",
-    "480x272",
+    "640x480",
 };
 
 #ifdef Dmai_Device_omap3530
