@@ -224,7 +224,7 @@ static Char *outputStrings[Display_Output_COUNT] = {
     "SVIDEO",
     "COMPOSITE",
     "COMPONENT",
-    "LCD2",
+    "LCD",
     "DVI",
     NULL
 };
