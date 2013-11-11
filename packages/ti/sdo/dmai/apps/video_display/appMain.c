@@ -107,6 +107,107 @@ Void appMain(Args * args)
         goto cleanup;
     }
 
+#define HEIGHT 480
+#define WIDTH 640
+#define YUV420SP
+#ifdef UYVY
+    x = color = 0;
+    pos = y = 0;
+    int tmpr[HEIGHT*WIDTH/2]={0};
+    int tmpg[HEIGHT*WIDTH/2]={0};
+    int tmpb[HEIGHT*WIDTH/2]={0};
+    int tmph[HEIGHT*WIDTH/2]={0};
+    for (x = 0; x < WIDTH; x++){
+       for (y = 0; y < HEIGHT/2; y++){
+            pos = x * HEIGHT/2 + y ;
+            tmpr[pos]=(92<<24) + (255<<16) + (92<<8) + 85;
+        }
+    }
+    for (x = 0; x < WIDTH; x++){
+       for (y = 0; y < HEIGHT/2; y++){
+            pos = x * HEIGHT/2 + y ;
+            tmpg[pos]=(165<<24) + (19<<16) + (165<<8) + 42;
+        }
+    }
+    for (x = 0; x < WIDTH; x++){
+       for (y = 0; y < HEIGHT/2; y++){
+            pos = x * HEIGHT/2 + y ;
+            tmpb[pos]=(45<<24) + (107<<16) + (45<<8) + 255;
+        }
+    }
+    for (y = 0; y < HEIGHT/2; y++){
+       for (x = 0; x < WIDTH; x++){
+            pos = x * HEIGHT/2 + y ;
+            if(y<WIDTH/2/3)
+               tmph[pos]=tmpr[pos];
+            else{
+               if(y<WIDTH/2/3*2)
+                  tmph[pos]=tmpg[pos];
+               else
+                  tmph[pos]=tmpb[pos];
+            }
+        }
+    }
+#endif
+#ifdef YUV420SP
+    x = color = 0;
+    pos = y = 0;
+    char tmpr[WIDTH*HEIGHT*3/2]={0};
+    char tmpg[WIDTH*HEIGHT*3/2]={0};
+    char tmpb[WIDTH*HEIGHT*3/2]={0};
+    char tmph[WIDTH*HEIGHT*3/2]={0};
+    for (y = 0; y < HEIGHT; y++) {
+       for (x = 0; x < WIDTH; x++) {
+            pos = y * WIDTH + x ;
+            tmpr[pos]=92;//Y
+            if (y < HEIGHT/2) {
+                if (x%2 == 0)
+                    tmpr[pos+WIDTH*HEIGHT]=85;//U
+                else
+                    tmpr[pos+WIDTH*HEIGHT]=255;//V
+            }
+        }
+    }
+    for (y = 0; y < HEIGHT; y++) {
+       for (x = 0; x < WIDTH; x++) {
+            pos = y * WIDTH + x ;
+            tmpb[pos]=45;
+            if (y < HEIGHT/2) {
+                if (x%2 == 0)
+                    tmpb[pos+WIDTH*HEIGHT]=255;
+                else
+                    tmpb[pos+WIDTH*HEIGHT]=107;
+            }
+        }
+    }
+    for (y = 0; y < HEIGHT; y++) {
+       for (x = 0; x < WIDTH; x++) {
+            pos = y * WIDTH + x ;
+            tmpg[pos]=165;
+            if (y < HEIGHT/2) {
+                if (x%2 == 0)
+                    tmpg[pos+WIDTH*HEIGHT]=42;
+                else
+                    tmpg[pos+WIDTH*HEIGHT]=16;
+            }
+        }
+    }
+    for (x = 0; x < WIDTH; x++) {
+       for (y = 0; y < HEIGHT*3/2; y++) {
+            pos = y * WIDTH + x ;
+            if(x<WIDTH/3)
+               tmph[pos]=tmpr[pos];
+            else{
+               if(x<WIDTH/3*2)
+                  tmph[pos]=tmpg[pos];
+               else
+                  tmph[pos]=tmpb[pos];
+            }
+        }
+    }
+
+#endif
+
     x = color = 0;
 
     while (numFrame++ < args->numFrames) {
@@ -128,7 +229,8 @@ Void appMain(Args * args)
 
         printf("Display size %dx%d pitch %d x = %d color %d\n", (Int) dim.width,
                (Int) dim.height, (Int) dim.lineLength, x, color);
-
+#define DEBUG
+#ifndef DEBUG
         /* Draw a vertical bar of a color */
         for (y = 0; y < dim.height; y++) {
             pos = y * dim.lineLength + x * 2;
@@ -137,6 +239,25 @@ Void appMain(Args * args)
 
         x = (x + 1) % dim.width;
         color = (color + 1) % 0xff;
+#endif
+#ifdef DEBUG
+       if (numFrame%500<125)
+           memcpy(Buffer_getUserPtr(hDispBuf), tmpr, WIDTH*HEIGHT*3/2);
+       else{
+           if(numFrame%500<250)
+              memcpy(Buffer_getUserPtr(hDispBuf), tmpg, WIDTH*HEIGHT*3/2);
+           else{
+               if(numFrame%500<375)
+                  memcpy(Buffer_getUserPtr(hDispBuf), tmpb, WIDTH*HEIGHT*3/2);
+               else
+                  memcpy(Buffer_getUserPtr(hDispBuf), tmph, WIDTH*HEIGHT*3/2);
+           }
+        }
+#endif
+#ifndef DEBUG
+           memcpy(Buffer_getUserPtr(hDispBuf), in_buf, WIDTH*HEIGHT*3/2);
+#endif
+       
 
         /* Give the display buffer back to be displayed */
         if (Display_put(hDisplay, hDispBuf) < 0) {
