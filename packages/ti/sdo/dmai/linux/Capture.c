@@ -84,7 +84,12 @@ static v4l2_std_id stds[VideoStd_COUNT] = { 0, 0, 0, 0, 0, V4L2_STD_NTSC,
   * Note: In for composite input, if it is set to chain/on_the_fly
   * mode then the output stream will be de-interlaced automatically.
   */
+#ifdef CHAINMODE
 Bool               captureChainMode = TRUE;
+#else 
+Bool               captureChainMode = FALSE;
+#endif 
+
 #endif
 
 typedef struct Capture_Object {
@@ -259,7 +264,7 @@ Capture_Handle Capture_create(BufTab_Handle hBufTab, Capture_Attrs *attrs)
        halfRateCapture = TRUE;
        attrs->videoStd = VideoStd_720P_60;
     }
-    
+
     if (captureChainMode == TRUE) {
         hCapture->resizerFd = Resizer_continous_config();
         if(hCapture->resizerFd <= 0) {
