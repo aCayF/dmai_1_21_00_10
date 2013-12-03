@@ -135,11 +135,13 @@ fac_error:
  * Resize_config
  ******************************************************************************/
 Int Resize_config(Resize_Handle hResize,
-                  Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf)
+                  Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf, Buffer_Handle hsDstBuf)
 {
-    BufferGfx_Dimensions srcDim, dstDim;
+    BufferGfx_Dimensions srcDim, dstDim, sdstDim;
     UInt                 hDif;
     UInt                 vDif;    
+    UInt                 shDif;
+    UInt                 svDif;    
 	struct rsz_channel_config rsz_chan_config;
 	struct rsz_single_shot_config rsz_ss_config;
 
@@ -159,16 +161,21 @@ Int Resize_config(Resize_Handle hResize,
         return Dmai_EINVAL;
     }
     
+    if (!hsDstBuf) {
+        Dmai_err0("Second destination buffer parameter is NULL\n");
+    }
+    
     /* Buffer needs to be graphics buffers */
     if (Buffer_getType(hSrcBuf) != Buffer_Type_GRAPHICS ||
-        Buffer_getType(hDstBuf) != Buffer_Type_GRAPHICS) {
-
+        Buffer_getType(hDstBuf) != Buffer_Type_GRAPHICS ||
+        hsDstBuf?(Buffer_getType(hsDstBuf) != Buffer_Type_GRAPHICS):FALSE) {
         Dmai_err0("Src and dst buffers need to be graphics buffers\n");
         return Dmai_EINVAL;
     }
 
     BufferGfx_getDimensions(hSrcBuf, &srcDim);
     BufferGfx_getDimensions(hDstBuf, &dstDim);
+    hsDstBuf?BufferGfx_getDimensions(hsDstBuf, &sdstDim):NULL;
 
     if (dstDim.width <= 0) {
         Dmai_err0("Destination buffer width must be greater than zero\n");
@@ -180,6 +187,16 @@ Int Resize_config(Resize_Handle hResize,
         return Dmai_EINVAL;
     }
 
+    if (hsDstBuf?(sdstDim.width <= 0):FALSE) {
+        Dmai_err0("Second destination buffer width must be greater than zero\n");
+        return Dmai_EINVAL;
+    }
+
+    if (hsDstBuf?(sdstDim.height <= 0):FALSE) {
+        Dmai_err0("Second destination buffer height must be greater than zero\n");
+        return Dmai_EINVAL;
+    }
+
     if ((srcDim.lineLength & 0x1F) != 0) {
         Dmai_err0("Source buffer pitch must be a multiple of 32 bytes\n");
         return Dmai_EINVAL;
@@ -187,6 +204,11 @@ Int Resize_config(Resize_Handle hResize,
 
     if ((dstDim.lineLength & 0x1F) != 0) {
         Dmai_err0("Destination buffer pitch must be a multiple of 32 bytes\n");
+        return Dmai_EINVAL;
+    }
+
+    if (hsDstBuf?((sdstDim.lineLength & 0x1F) != 0):FALSE) {
+        Dmai_err0("Second destination buffer pitch must be a multiple of 32 bytes\n");
         return Dmai_EINVAL;
     }
 
@@ -212,6 +234,29 @@ Int Resize_config(Resize_Handle hResize,
 
     if (vDif > 4096) {
         Dmai_err0("Vertical down-scaling must not exceed 1/16x\n");
+        return Dmai_EINVAL;
+    }    
+
+    shDif = hsDstBuf?(srcDim.width  * 256 / sdstDim.width):0;
+    svDif = hsDstBuf?(srcDim.height * 256 / sdstDim.height):0;
+
+    if (shDif && shDif < 32) {
+        Dmai_err0("Second horizontal up-scaling must not exceed 8x\n");
+        return Dmai_EINVAL;
+    }
+
+    if (shDif && shDif > 4096) {
+        Dmai_err0("Second horizontal down-scaling must not exceed 1/16x\n");
+        return Dmai_EINVAL;
+    }
+
+    if (svDif && svDif < 32) {
+        Dmai_err0("Second vertical up-scaling must not exceed 8x\n");
+        return Dmai_EINVAL;
+    }
+
+    if (svDif && svDif > 4096) {
+        Dmai_err0("Second vertical down-scaling must not exceed 1/16x\n");
         return Dmai_EINVAL;
     }    
 
@@ -248,7 +293,10 @@ Int Resize_config(Resize_Handle hResize,
 	rsz_ss_config.output1.enable = 1;
 	rsz_ss_config.output1.width = dstDim.width;
 	rsz_ss_config.output1.height = dstDim.height;
-	rsz_ss_config.output2.enable = 0;
+	rsz_ss_config.output2.pix_fmt = hsDstBuf?pixFormatConversion(BufferGfx_getColorSpace(hsDstBuf)):0;
+	rsz_ss_config.output2.enable = hsDstBuf?1:0;
+	rsz_ss_config.output2.width = hsDstBuf?sdstDim.width:0;
+	rsz_ss_config.output2.height = hsDstBuf?sdstDim.height:0;
 
 	rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
 	rsz_chan_config.chain = 0;
@@ -280,13 +328,15 @@ faco_error:
  * Resize_execute
  ******************************************************************************/
 Int Resize_execute(Resize_Handle hResize,
-                   Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf)
+                   Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf, Buffer_Handle hsDstBuf)
 {
     struct imp_convert  rsz;
     BufferGfx_Dimensions srcDim;
     BufferGfx_Dimensions dstDim;
+    BufferGfx_Dimensions sdstDim;
     UInt32               srcOffset;
     UInt32               dstOffset;
+    UInt32               sdstOffset;
     
     assert(hResize);
     assert(hSrcBuf);
@@ -296,9 +346,11 @@ Int Resize_execute(Resize_Handle hResize,
 
     BufferGfx_getDimensions(hSrcBuf, &srcDim);
     BufferGfx_getDimensions(hDstBuf, &dstDim);
+    hsDstBuf?BufferGfx_getDimensions(hsDstBuf, &sdstDim):NULL;
 
     srcOffset = srcDim.y * srcDim.lineLength + (srcDim.x << 1);
     dstOffset = dstDim.y * dstDim.lineLength + (dstDim.x << 1);
+    sdstOffset = hsDstBuf?(sdstDim.y * sdstDim.lineLength + (sdstDim.x << 1)):0;
 
     rsz.in_buff.index     = -1;
     rsz.in_buff.buf_type  = IMP_BUF_IN;
@@ -310,12 +362,18 @@ Int Resize_execute(Resize_Handle hResize,
     rsz.out_buff1.offset   = Buffer_getPhysicalPtr(hDstBuf) + dstOffset;
     rsz.out_buff1.size     = Buffer_getSize(hDstBuf);
     
+    rsz.out_buff2.index    = -1;
+    rsz.out_buff2.buf_type = IMP_BUF_OUT2;
+    rsz.out_buff2.offset   = hsDstBuf?(Buffer_getPhysicalPtr(hsDstBuf) + sdstOffset):0;
+    rsz.out_buff2.size     = hsDstBuf?Buffer_getSize(hsDstBuf):0;
+    
     /* 
      * The IPIPE requires that the memory offsets of the input and output
      * buffers start on 32-byte boundaries.
      */
     assert((rsz.in_buff.offset  & 0x1F) == 0);
     assert((rsz.out_buff1.offset & 0x1F) == 0);
+    assert((rsz.out_buff2.offset & 0x1F) == 0);
 
     /* Start IPIPE operation */
     if (ioctl(hResize->fd, RSZ_RESIZE, &rsz) == -1) {
@@ -323,7 +381,8 @@ Int Resize_execute(Resize_Handle hResize,
         return Dmai_EFAIL;
     }
 
-    Buffer_setNumBytesUsed(hDstBuf, Buffer_getNumBytesUsed(hSrcBuf));
+    Buffer_setNumBytesUsed(hDstBuf, Buffer_getSize(hDstBuf));
+    hsDstBuf?Buffer_setNumBytesUsed(hsDstBuf, Buffer_getSize(hsDstBuf)):NULL;
     return Dmai_EOK;
 }
 

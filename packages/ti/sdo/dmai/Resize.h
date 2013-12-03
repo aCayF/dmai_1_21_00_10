@@ -196,7 +196,7 @@ extern Resize_Handle Resize_create(Resize_Attrs *attrs);
  * @remarks     #Resize_create must be called before this function.
  */
 extern Int Resize_config(Resize_Handle hResize,
-                         Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf);
+                         Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf, Buffer_Handle hsDstBuf);
 
 /**
  * @brief       Execute a Resize job.
@@ -214,7 +214,7 @@ extern Int Resize_config(Resize_Handle hResize,
  * @remarks     #Resize_config must be called before this function.
  */
 extern Int Resize_execute(Resize_Handle hResize,
-                          Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf);
+                          Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf, Buffer_Handle hsDstBuf);
 
 /**
  * @brief       Deletes a Resize job.
