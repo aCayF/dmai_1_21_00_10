@@ -260,60 +260,63 @@ Int Resize_config(Resize_Handle hResize,
         return Dmai_EINVAL;
     }    
 
-    /* Setting default configuration in Resizer */
-	Dmai_clear(rsz_ss_config);
-	rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
-	rsz_chan_config.chain = 0;
-	rsz_chan_config.len = 0;
-	rsz_chan_config.config = NULL; /* to set defaults in driver */
-	if (ioctl(hResize->fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
-		Dmai_err0("Error in setting default configuration for single shot mode\n");
-        goto faco_error;
-	}
+    /* Configure for ColorSpace_UYVY_*/
+    if (BufferGfx_getColorSpace(hSrcBuf) == ColorSpace_UYVY) {
+        /* Setting default configuration in Resizer */
+	    Dmai_clear(rsz_ss_config);
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = 0;
+	    rsz_chan_config.config = NULL; /* to set defaults in driver */
+	    if (ioctl(hResize->fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in setting default configuration for single shot mode\n");
+            goto faco_error;
+	    }
 
-	/* default configuration setting in Resizer successfull */
-	Dmai_clear(rsz_ss_config);
-	rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
-	rsz_chan_config.chain = 0;
-	rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
-	rsz_chan_config.config = &rsz_ss_config;
+	    /* default configuration setting in Resizer successfull */
+	    Dmai_clear(rsz_ss_config);
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+	    rsz_chan_config.config = &rsz_ss_config;
 
-	if (ioctl(hResize->fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
-		Dmai_err0("Error in getting resizer channel configuration from driver\n");
-        goto faco_error;
-	}
+	    if (ioctl(hResize->fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in getting resizer channel configuration from driver\n");
+            goto faco_error;
+	    }
 
-	/* input params are set at the resizer */
-	rsz_ss_config.input.image_width  = srcDim.width;
-	rsz_ss_config.input.image_height = srcDim.height;
-	rsz_ss_config.input.ppln = rsz_ss_config.input.image_width + 8;
-	rsz_ss_config.input.lpfr = rsz_ss_config.input.image_height + 10;
-	rsz_ss_config.input.pix_fmt = pixFormatConversion(BufferGfx_getColorSpace(hSrcBuf));
-	rsz_ss_config.output1.pix_fmt = pixFormatConversion(BufferGfx_getColorSpace(hDstBuf));
-	rsz_ss_config.output1.enable = 1;
-	rsz_ss_config.output1.width = dstDim.width;
-	rsz_ss_config.output1.height = dstDim.height;
-	rsz_ss_config.output2.pix_fmt = hsDstBuf?pixFormatConversion(BufferGfx_getColorSpace(hsDstBuf)):0;
-	rsz_ss_config.output2.enable = hsDstBuf?1:0;
-	rsz_ss_config.output2.width = hsDstBuf?sdstDim.width:0;
-	rsz_ss_config.output2.height = hsDstBuf?sdstDim.height:0;
+	    /* input params are set at the resizer */
+	    rsz_ss_config.input.image_width  = srcDim.width;
+	    rsz_ss_config.input.image_height = srcDim.height;
+	    rsz_ss_config.input.ppln = rsz_ss_config.input.image_width + 8;
+	    rsz_ss_config.input.lpfr = rsz_ss_config.input.image_height + 10;
+	    rsz_ss_config.input.pix_fmt = pixFormatConversion(BufferGfx_getColorSpace(hSrcBuf));
+	    rsz_ss_config.output1.pix_fmt = pixFormatConversion(BufferGfx_getColorSpace(hDstBuf));
+	    rsz_ss_config.output1.enable = 1;
+	    rsz_ss_config.output1.width = dstDim.width;
+	    rsz_ss_config.output1.height = dstDim.height;
+	    rsz_ss_config.output2.pix_fmt = hsDstBuf?pixFormatConversion(BufferGfx_getColorSpace(hsDstBuf)):0;
+	    rsz_ss_config.output2.enable = hsDstBuf?1:0;
+	    rsz_ss_config.output2.width = hsDstBuf?sdstDim.width:0;
+	    rsz_ss_config.output2.height = hsDstBuf?sdstDim.height:0;
 
-	rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
-	rsz_chan_config.chain = 0;
-	rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
-	if (ioctl(hResize->fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
-		Dmai_err0("Error in setting default configuration for single shot mode\n");
-        goto faco_error;
-	}
-	rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
-	rsz_chan_config.chain = 0;
-	rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+	    if (ioctl(hResize->fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in setting default configuration for single shot mode\n");
+            goto faco_error;
+	    }
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
 
-	/* read again and verify */
-	if (ioctl(hResize->fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
-		Dmai_err0("Error in getting configuration from driver\n");
-        goto faco_error;
-	}
+	    /* read again and verify */
+	    if (ioctl(hResize->fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in getting configuration from driver\n");
+            goto faco_error;
+	    }
+    }
 
     return Dmai_EOK;
     
@@ -331,12 +334,16 @@ Int Resize_execute(Resize_Handle hResize,
                    Buffer_Handle hSrcBuf, Buffer_Handle hDstBuf, Buffer_Handle hsDstBuf)
 {
     struct imp_convert  rsz;
+	struct rsz_channel_config rsz_chan_config;
+	struct rsz_single_shot_config rsz_ss_config;
     BufferGfx_Dimensions srcDim;
     BufferGfx_Dimensions dstDim;
     BufferGfx_Dimensions sdstDim;
     UInt32               srcOffset;
     UInt32               dstOffset;
     UInt32               sdstOffset;
+    UInt32               srcSize;
+    UInt32               dstSize;
     
     assert(hResize);
     assert(hSrcBuf);
@@ -347,42 +354,184 @@ Int Resize_execute(Resize_Handle hResize,
     BufferGfx_getDimensions(hSrcBuf, &srcDim);
     BufferGfx_getDimensions(hDstBuf, &dstDim);
     hsDstBuf?BufferGfx_getDimensions(hsDstBuf, &sdstDim):NULL;
+    srcSize = srcDim.width * srcDim.height;
+    dstSize = dstDim.width * dstDim.height;
 
-    srcOffset = srcDim.y * srcDim.lineLength + (srcDim.x << 1);
-    dstOffset = dstDim.y * dstDim.lineLength + (dstDim.x << 1);
-    sdstOffset = hsDstBuf?(sdstDim.y * sdstDim.lineLength + (sdstDim.x << 1)):0;
+    /* the resize operation to ColorSpace_UYVY is different from ColorSpace_YUV420PSEMI*/
+    if (BufferGfx_getColorSpace(hSrcBuf) == ColorSpace_UYVY) {
+        srcOffset = srcDim.y * srcDim.lineLength + (srcDim.x << 1);
+        dstOffset = dstDim.y * dstDim.lineLength + (dstDim.x << 1);
+        sdstOffset = hsDstBuf?(sdstDim.y * sdstDim.lineLength + (sdstDim.x << 1)):0;
 
-    rsz.in_buff.index     = -1;
-    rsz.in_buff.buf_type  = IMP_BUF_IN;
-    rsz.in_buff.offset    = Buffer_getPhysicalPtr(hSrcBuf) + srcOffset;
-    rsz.in_buff.size      = Buffer_getSize(hSrcBuf);
+        rsz.in_buff.index     = -1;
+        rsz.in_buff.buf_type  = IMP_BUF_IN;
+        rsz.in_buff.offset    = Buffer_getPhysicalPtr(hSrcBuf) + srcOffset;
+        rsz.in_buff.size      = Buffer_getSize(hSrcBuf);
 
-    rsz.out_buff1.index    = -1;
-    rsz.out_buff1.buf_type = IMP_BUF_OUT1;
-    rsz.out_buff1.offset   = Buffer_getPhysicalPtr(hDstBuf) + dstOffset;
-    rsz.out_buff1.size     = Buffer_getSize(hDstBuf);
-    
-    rsz.out_buff2.index    = -1;
-    rsz.out_buff2.buf_type = IMP_BUF_OUT2;
-    rsz.out_buff2.offset   = hsDstBuf?(Buffer_getPhysicalPtr(hsDstBuf) + sdstOffset):0;
-    rsz.out_buff2.size     = hsDstBuf?Buffer_getSize(hsDstBuf):0;
-    
-    /* 
-     * The IPIPE requires that the memory offsets of the input and output
-     * buffers start on 32-byte boundaries.
-     */
-    assert((rsz.in_buff.offset  & 0x1F) == 0);
-    assert((rsz.out_buff1.offset & 0x1F) == 0);
-    assert((rsz.out_buff2.offset & 0x1F) == 0);
+        rsz.out_buff1.index    = -1;
+        rsz.out_buff1.buf_type = IMP_BUF_OUT1;
+        rsz.out_buff1.offset   = Buffer_getPhysicalPtr(hDstBuf) + dstOffset;
+        rsz.out_buff1.size     = Buffer_getSize(hDstBuf);
+        
+        rsz.out_buff2.index    = -1;
+        rsz.out_buff2.buf_type = IMP_BUF_OUT2;
+        rsz.out_buff2.offset   = hsDstBuf?(Buffer_getPhysicalPtr(hsDstBuf) + sdstOffset):0;
+        rsz.out_buff2.size     = hsDstBuf?Buffer_getSize(hsDstBuf):0;
+        
+        /* 
+         * The IPIPE requires that the memory offsets of the input and output
+         * buffers start on 32-byte boundaries.
+         */
+        assert((rsz.in_buff.offset  & 0x1F) == 0);
+        assert((rsz.out_buff1.offset & 0x1F) == 0);
+        assert((rsz.out_buff2.offset & 0x1F) == 0);
 
-    /* Start IPIPE operation */
-    if (ioctl(hResize->fd, RSZ_RESIZE, &rsz) == -1) {
-        Dmai_err0("Failed RSZ_RESIZE\n");
-        return Dmai_EFAIL;
+        /* Start IPIPE operation */
+        if (ioctl(hResize->fd, RSZ_RESIZE, &rsz) == -1) {
+            Dmai_err0("Failed RSZ_RESIZE\n");
+            return Dmai_EFAIL;
+        }
+
+        Buffer_setNumBytesUsed(hDstBuf, Buffer_getSize(hDstBuf));
+        hsDstBuf?Buffer_setNumBytesUsed(hsDstBuf, Buffer_getSize(hsDstBuf)):NULL;
+    } else {
+        /* configure for the ColorSpace_YUV420PSEMI*/
+	    Dmai_clear(rsz_ss_config);
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = 0;
+	    rsz_chan_config.config = NULL; /* to set defaults in driver */
+	    if (ioctl(hResize->fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in setting default configuration for single shot mode\n");
+            return Dmai_EFAIL;
+	    }
+
+	    /* default configuration setting in Resizer successfull */
+	    Dmai_clear(rsz_ss_config);
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+	    rsz_chan_config.config = &rsz_ss_config;
+
+	    if (ioctl(hResize->fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in getting configuration from driver\n");
+            return Dmai_EFAIL;
+	    }
+
+	    /* input params are set at the resizer */
+	    rsz_ss_config.input.image_width  = srcDim.width;
+	    rsz_ss_config.input.image_height = srcDim.height;
+	    rsz_ss_config.input.ppln = rsz_ss_config.input.image_width + 8;
+	    rsz_ss_config.input.lpfr = rsz_ss_config.input.image_height + 10;
+	    rsz_ss_config.input.pix_fmt = IPIPE_420SP_Y;
+	    rsz_ss_config.output1.pix_fmt = pixFormatConversion(BufferGfx_getColorSpace(hDstBuf));
+        rsz_ss_config.output1.enable = 1;
+	    rsz_ss_config.output1.width = dstDim.width;
+	    rsz_ss_config.output1.height = dstDim.height;
+	    rsz_ss_config.output2.enable = 0;
+
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+	    if (ioctl(hResize->fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in setting default configuration for single shot mode\n");
+            return Dmai_EFAIL;
+	    }
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+
+	    /* read again and verify */
+	    if (ioctl(hResize->fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in getting configuration from driver\n");
+            return Dmai_EFAIL;
+	    }
+
+        /* execute for ColorSpace_YUV420PSEMI*/
+        Dmai_clear(rsz);
+        //srcOffset = srcDim.y * srcDim.lineLength + (srcDim.x << 1);
+        //dstOffset = dstDim.y * dstDim.lineLength + (dstDim.x << 1);
+        rsz.in_buff.buf_type  = IMP_BUF_IN;
+        rsz.in_buff.index     = -1;
+        rsz.in_buff.offset    = Buffer_getPhysicalPtr(hSrcBuf);
+        //rsz.in_buff.size      = Buffer_getSize(hSrcBuf);
+        rsz.in_buff.size      = srcSize;
+
+        rsz.out_buff1.buf_type = IMP_BUF_OUT1;
+        rsz.out_buff1.index    = -1;
+        rsz.out_buff1.offset    = Buffer_getPhysicalPtr(hDstBuf);
+        //rsz.out_buff1.size     = Buffer_getSize(hDstBuf);
+        rsz.out_buff1.size     = dstSize;
+        
+        /* 
+         * The IPIPE requires that the memory offsets of the input and output
+         * buffers start on 32-byte boundaries.
+         */
+        assert((rsz.in_buff.offset  & 0x1F) == 0);
+        assert((rsz.out_buff1.offset & 0x1F) == 0);
+        /* Start IPIPE operation */
+        if (ioctl(hResize->fd, RSZ_RESIZE, &rsz) == -1) {
+            Dmai_err0("Failed RSZ_RESIZE\n");
+            return Dmai_EFAIL;
+        }
+
+	    /* input params are set at the resizer */
+	    rsz_ss_config.input.image_width  = srcDim.width;
+	    rsz_ss_config.input.image_height = srcDim.height>>1;
+	    rsz_ss_config.input.ppln = rsz_ss_config.input.image_width + 8;
+	    rsz_ss_config.input.lpfr = rsz_ss_config.input.image_height + 10;
+	    rsz_ss_config.input.pix_fmt = IPIPE_420SP_C;
+        rsz_ss_config.output1.pix_fmt = pixFormatConversion(BufferGfx_getColorSpace(hDstBuf));
+	    rsz_ss_config.output1.enable = 1;
+	    rsz_ss_config.output1.width = dstDim.width;
+	    rsz_ss_config.output1.height = dstDim.height;
+        rsz_ss_config.output2.enable = 0;
+
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+	    if (ioctl(hResize->fd, RSZ_S_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in setting default configuration for single shot mode\n");
+            return Dmai_EFAIL;
+	    }
+	    rsz_chan_config.oper_mode = IMP_MODE_SINGLE_SHOT;
+	    rsz_chan_config.chain = 0;
+	    rsz_chan_config.len = sizeof(struct rsz_single_shot_config);
+
+	    /* read again and verify */
+	    if (ioctl(hResize->fd, RSZ_G_CONFIG, &rsz_chan_config) < 0) {
+	    	Dmai_err0("Error in getting configuration from driver\n");
+            return Dmai_EFAIL;
+	    }
+
+        Dmai_clear(rsz);
+        //srcOffset = srcDim.y * srcDim.lineLength + (srcDim.x << 1);
+        //dstOffset = dstDim.y * dstDim.lineLength + (dstDim.x << 1);
+        rsz.in_buff.buf_type  = IMP_BUF_IN;
+        rsz.in_buff.index     = -1;
+        rsz.in_buff.offset    = Buffer_getPhysicalPtr(hSrcBuf)  + srcSize;
+        rsz.in_buff.size      = srcSize>>1;
+
+        rsz.out_buff1.buf_type = IMP_BUF_OUT1;
+        rsz.out_buff1.index    = -1;
+        rsz.out_buff1.offset   = Buffer_getPhysicalPtr(hDstBuf)  + dstSize;
+        rsz.out_buff1.size     = dstSize>>1;
+        
+        /* 
+         * The IPIPE requires that the memory offsets of the input and output
+         * buffers start on 32-byte boundaries.
+         */
+        assert((rsz.in_buff.offset  & 0x1F) == 0);
+        assert((rsz.out_buff1.offset & 0x1F) == 0);
+        /* Start IPIPE operation */
+        if (ioctl(hResize->fd, RSZ_RESIZE, &rsz) == -1) {
+            Dmai_err0("Failed RSZ_RESIZE\n");
+            return Dmai_EFAIL;
+        }
+
+        Buffer_setNumBytesUsed(hDstBuf, Buffer_getNumBytesUsed(hSrcBuf));
+
     }
-
-    Buffer_setNumBytesUsed(hDstBuf, Buffer_getSize(hDstBuf));
-    hsDstBuf?Buffer_setNumBytesUsed(hsDstBuf, Buffer_getSize(hsDstBuf)):NULL;
     return Dmai_EOK;
 }
 
